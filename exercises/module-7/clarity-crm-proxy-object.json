@@ -1,0 +1,146 @@
+{
+  "_comment": [
+    "ClarityAccount — Custom Object Definition for Module 7 (CRM Integration)",
+    "",
+    "INTENDED DESIGN (storageType: proxy)",
+    "  The original plan was to create a Proxy Object that would forward all CRUD",
+    "  operations to an external CRM endpoint:",
+    "    proxyEndpointURL: /o/headless-admin-user/v1.0/accounts",
+    "  This would let Liferay's Object Framework expose the CRM data through a",
+    "  generated REST API at /o/c/clarityaccounts/ without storing anything locally.",
+    "",
+    "PLATFORM LIMITATION",
+    "  storageType: 'proxy' is NOT supported in Liferay DXP 2026.Q1.2-LTS.",
+    "  Valid storageType values: 'default', 'salesforce', 'sugarcrm'.",
+    "  Passing 'proxy' raises: ObjectDefinitionStorageTypeException.",
+    "",
+    "IMPLEMENTED ALTERNATIVE",
+    "  The object was created with storageType: 'default' (local database storage).",
+    "  The Object Framework auto-generates the same REST API surface:",
+    "    GET/POST /o/c/clarityaccounts/",
+    "    GET/PUT/PATCH/DELETE /o/c/clarityaccounts/{id}",
+    "  Students import CRM data via the Headless Batch Engine instead of live proxy.",
+    "  Pedagogical outcome is identical: a custom object with a REST API, queryable",
+    "  from fragments and client extensions via fetch().",
+    "",
+    "BATCH IMPORT ALTERNATIVE (for live CRM data)",
+    "  Use the Headless Batch Engine to load CRM account records:",
+    "    POST /o/headless-batch-engine/v1.0/import-task/com.liferay.object.rest.dto.v1_0.ObjectEntry",
+    "  See clarity-crm-sample-accounts.json for the sample payload."
+  ],
+
+  "attempted_proxy_payload": {
+    "_comment": "This payload raises ObjectDefinitionStorageTypeException — kept for reference",
+    "name": "ClarityAccount",
+    "label": { "en_US": "Clarity CRM Account" },
+    "pluralLabel": { "en_US": "Clarity CRM Accounts" },
+    "scope": "company",
+    "storageType": "proxy",
+    "proxyEndpointURL": "http://localhost:8080/o/headless-admin-user/v1.0/accounts",
+    "objectFields": [
+      {
+        "businessType": "Text",
+        "label": { "en_US": "Account Name" },
+        "name": "accountName",
+        "required": true,
+        "indexed": true
+      },
+      {
+        "businessType": "Text",
+        "label": { "en_US": "Account Type" },
+        "name": "accountType",
+        "required": false
+      },
+      {
+        "businessType": "Text",
+        "label": { "en_US": "CRM External Reference" },
+        "name": "crmExternalReference",
+        "required": false,
+        "indexed": true,
+        "indexedAsKeyword": true
+      }
+    ]
+  },
+
+  "actual_payload": {
+    "_comment": "Payload used successfully with POST /o/object-admin/v1.0/object-definitions",
+    "name": "ClarityAccount",
+    "label": { "en_US": "Clarity CRM Account" },
+    "pluralLabel": { "en_US": "Clarity CRM Accounts" },
+    "scope": "company",
+    "storageType": "default",
+    "titleObjectFieldName": "accountName",
+    "portlet": true,
+    "enableCategorization": false,
+    "enableComments": false,
+    "enableIndexSearch": true,
+    "objectFields": [
+      {
+        "businessType": "Text",
+        "label": { "en_US": "Account Name" },
+        "name": "accountName",
+        "required": true,
+        "indexed": true,
+        "indexedAsKeyword": false,
+        "indexedLanguageId": "en_US"
+      },
+      {
+        "businessType": "Text",
+        "label": { "en_US": "Account Type" },
+        "name": "accountType",
+        "required": false,
+        "indexed": false,
+        "indexedAsKeyword": false
+      },
+      {
+        "businessType": "Text",
+        "label": { "en_US": "CRM External Reference" },
+        "name": "crmExternalReference",
+        "required": false,
+        "indexed": true,
+        "indexedAsKeyword": true
+      }
+    ]
+  },
+
+  "created_object": {
+    "id": 102641,
+    "name": "ClarityAccount",
+    "restContextPath": "/o/c/clarityaccounts",
+    "status": "approved",
+    "active": true,
+    "dateCreated": "2026-07-02T02:35:09Z"
+  },
+
+  "publish_request": {
+    "endpoint": "POST /o/object-admin/v1.0/object-definitions/102641/publish",
+    "body": null
+  },
+
+  "sample_entries": [
+    {
+      "externalReferenceCode": "CRM-ACC-001",
+      "accountName": "Northeast Optical Distributors",
+      "accountType": "Distributor",
+      "crmExternalReference": "CRM-ACC-001"
+    },
+    {
+      "externalReferenceCode": "CRM-ACC-002",
+      "accountName": "Pacific Vision Partners",
+      "accountType": "Reseller",
+      "crmExternalReference": "CRM-ACC-002"
+    },
+    {
+      "externalReferenceCode": "CRM-ACC-003",
+      "accountName": "Southern Eyecare Group",
+      "accountType": "Distributor",
+      "crmExternalReference": "CRM-ACC-003"
+    }
+  ],
+
+  "validation": {
+    "get_endpoint": "GET /o/c/clarityaccounts/",
+    "expected_totalCount": 3,
+    "control_panel_path": "Control Panel → Objects → ClarityAccount"
+  }
+}
