@@ -37,7 +37,7 @@ public class SearchResultsExpandoTemplateContextContributor
 
 		// TODO: Put a new ExpandoHelper into contextObjects under the key
 		// "expandoHelper", passing _cpDefinitionLocalService to its
-		// constructor.GIT
+		// constructor.
 	}
 
 	@Reference
