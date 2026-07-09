@@ -20,12 +20,11 @@ import org.osgi.service.component.annotations.Component;
  * @author Ricky Pan
  */
 
-/* TODO 1: Set key and order validator priority */
 
 @Component(
     property = {
-        "commerce.order.validator.key=",
-        "commerce.order.validator.priority:Integer="
+        "commerce.order.validator.key=clarityvisionsolutions-warranty-validator",
+        "commerce.order.validator.priority:Integer=15"
     },
     service = CommerceOrderValidator.class
 )
@@ -33,80 +32,69 @@ public class ClarityWarrantyOrderValidator implements CommerceOrderValidator {
 
     @Override
     public String getKey() {
-        /* TODO 2: Implement method to return the order validator key. */
-
-        return "";
+        return "clarityvisionsolutions-warranty-validator";
     }
 
     @Override
     public CommerceOrderValidatorResult validate(
             Locale locale, CommerceOrder commerceOrder, CPInstance cpInstance,
             String json, BigDecimal quantity, boolean child)
-        throws PortalException {
+            throws PortalException {
 
         if (cpInstance == null) {
             return new CommerceOrderValidatorResult(true);
         }
 
-        /* TODO 4: Use helper method to return validation result. */
-
-        // The cpInstance object contains a reference to the SKU needed by 
-        // the helper method
-
-        return new CommerceOrderValidatorResult(true);
+        return _validateIncompatibility(
+                locale, commerceOrder, cpInstance.getSku());
     }
 
     @Override
     public CommerceOrderValidatorResult validate(
             Locale locale, CommerceOrderItem commerceOrderItem)
-        throws PortalException {
+            throws PortalException {
 
-        /* TODO 5: Use helper method to return validation result. */
-
-        // The commerceOrderItem contains references to both the order as
-        // well as the item SKU needed by the helper method
-
-        return new CommerceOrderValidatorResult(true);
+        return _validateIncompatibility(
+                locale, commerceOrderItem.getCommerceOrder(),
+                commerceOrderItem.getSku());
     }
 
     private CommerceOrderValidatorResult _validateIncompatibility(
-        Locale locale, CommerceOrder commerceOrder, String incomingSku) {
+            Locale locale, CommerceOrder commerceOrder, String incomingSku) {
 
         if ((commerceOrder == null) || (incomingSku == null)) {
             return new CommerceOrderValidatorResult(true);
         }
 
         if (!_WARRANTY_1YR_SKU.equals(incomingSku) &&
-            !_WARRANTY_LFT_SKU.equals(incomingSku)) {
+                !_WARRANTY_LFT_SKU.equals(incomingSku)) {
 
             return new CommerceOrderValidatorResult(true);
         }
 
         String conflictingSku =
-            _WARRANTY_1YR_SKU.equals(incomingSku) ? _WARRANTY_LFT_SKU :
-                _WARRANTY_1YR_SKU;
+                _WARRANTY_1YR_SKU.equals(incomingSku) ? _WARRANTY_LFT_SKU :
+                        _WARRANTY_1YR_SKU;
 
         for (CommerceOrderItem item : commerceOrder.getCommerceOrderItems()) {
             if (conflictingSku.equals(item.getSku())) {
                 ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-                    "content.Language", locale, getClass());
+                        "content.Language", locale, getClass());
 
                 return new CommerceOrderValidatorResult(
-                    false,
-                    LanguageUtil.format(
-                        resourceBundle,
-                        "you-cannot-combine-x-and-x-in-the-same-order",
-                        new String[] {_WARRANTY_LFT_SKU, _WARRANTY_1YR_SKU}));
+                        false,
+                        LanguageUtil.format(
+                                resourceBundle,
+                                "you-cannot-combine-x-and-x-in-the-same-order",
+                                new String[] {_WARRANTY_LFT_SKU, _WARRANTY_1YR_SKU}));
             }
         }
 
         return new CommerceOrderValidatorResult(true);
     }
 
-    /* TODO 3: Set the SKUs to point to the warranty products in your portal. */
+    private static final String _WARRANTY_1YR_SKU = "WARRANTY-1YR";
 
-    private static final String _WARRANTY_1YR_SKU = "";
-
-    private static final String _WARRANTY_LFT_SKU = "";
+    private static final String _WARRANTY_LFT_SKU = "WARRANTY-LFT";
 
 }
