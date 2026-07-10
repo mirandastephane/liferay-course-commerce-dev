@@ -94,7 +94,7 @@ function getInventoryStatus(quantity, threshold) {
 // ── Product data ───────────────────────────────────────────────────────────────
 
 /**
- * Fetches product name and price for a SKU from the Headless Catalog API.
+ * Fetches product name and price for a SKU from the Headless Delivery Catalog API.
  * Uses the user's browser session for same-origin authentication.
  * Falls back gracefully on any error.
  *
@@ -103,27 +103,23 @@ function getInventoryStatus(quantity, threshold) {
  */
 async function fetchProductData(sku) {
     try {
-        const skuRes = await fetch(
-            `/o/headless-commerce-admin-catalog/v1.0/skus?search=${encodeURIComponent(sku)}&pageSize=1`,
+        const res = await fetch(
+            `/o/headless-commerce-delivery-catalog/v1.0/channels/${CHANNEL_ID}/products` +
+            `?search=${encodeURIComponent(sku)}&pageSize=1&nestedFields=skus`,
             { headers: { Accept: 'application/json' } }
         );
-        if (!skuRes.ok) return { sku, name: sku, price: 0 };
+        if (!res.ok) return { sku, name: sku, price: 0 };
 
-        const skuData = await skuRes.json();
-        const skuItem = skuData.items?.[0];
-        if (!skuItem) return { sku, name: sku, price: 0 };
+        const data = await res.json();
+        const product = data.items?.[0];
+        if (!product) return { sku, name: sku, price: 0 };
 
-        const prodRes = await fetch(
-            `/o/headless-commerce-admin-catalog/v1.0/products/${skuItem.productId}`,
-            { headers: { Accept: 'application/json' } }
-        );
-        if (!prodRes.ok) return { sku, name: sku, price: skuItem.price ?? 0 };
-
-        const product = await prodRes.json();
+        // Delivery Catalog returns name as a plain string (not a locale map)
+        const skuItem = product.skus?.find(s => s.sku === sku);
         return {
             sku,
-            name: product.name?.en_US ?? sku,
-            price: skuItem.price ?? 0,
+            name: product.name ?? sku,
+            price: skuItem?.price?.price ?? 0,
         };
     } catch {
         return { sku, name: sku, price: 0 };
@@ -193,10 +189,8 @@ function createListItem(product, status, { formatPrice }) {
 
     // ── Import shared utilities ──────────────────────────────────────────────
     // fetchProductInventory: calls Headless Commerce Delivery Catalog API
-    //   (its body is the TODO in clarity-b2b-utils/assets/b2b-utils.js)
-    // isLowStock: quantity <= threshold (already implemented)
-    // formatPrice: Intl.NumberFormat wrapper (already implemented)
-    const { fetchProductInventory, isLowStock, formatPrice } =
+    // formatPrice: Intl.NumberFormat wrapper
+    const { fetchProductInventory, formatPrice } =
         await import('clarity:b2b-utils');
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -226,23 +220,18 @@ function createListItem(product, status, { formatPrice }) {
             ? productResult.value
             : { sku, name: sku, price: 0 };
 
-        // qty is -1 while the fetchProductInventory TODO is still pending.
-        // When qty < 0 we skip getInventoryStatus() and default to 'in-stock'
-        // so the list renders without errors in the scaffold phase.
         const qty = inventoryResult.status === 'fulfilled'
             ? inventoryResult.value
-            : -1;
+            : 0;
 
         if (inventoryResult.status === 'rejected') {
-            console.info(
-                '[clarity-wishlist] Inventory pending for', sku, ':',
+            console.warn(
+                '[clarity-wishlist] Inventory fetch failed for', sku, ':',
                 inventoryResult.reason?.message
             );
         }
 
-        const status = qty >= 0
-            ? getInventoryStatus(qty, LOW_STOCK_THRESHOLD)
-            : 'in-stock';
+        const status = getInventoryStatus(qty, LOW_STOCK_THRESHOLD);
 
         const li = createListItem(product, status, { formatPrice });
 

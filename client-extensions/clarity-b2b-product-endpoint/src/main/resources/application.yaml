@@ -8,5 +8,5 @@ spring:
 liferay:
   url: ${PORTAL_URL:http://localhost:8080}
   admin:
-    email: ${LIFERAY_ADMIN_EMAIL_ADDRESS:ian.miller@clarityvisionsolutions.com}
+    email: ${LIFERAY_ADMIN_EMAIL_ADDRESS:admin@clarityvisionsolutions.com}
     password: ${LIFERAY_ADMIN_PASSWORD:learn}

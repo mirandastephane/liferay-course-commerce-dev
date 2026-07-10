@@ -22,40 +22,16 @@
  * }
  */
 export async function fetchProductInventory(sku, channelId) {
-
-	// TODO: Implement the API call to retrieve the stock quantity for the
-	// given SKU within the specified channel.
-	//
-	// Suggested endpoint (Headless Commerce Delivery Catalog):
-	//
-	//   GET /o/headless-commerce-delivery-catalog/v1.0/channels/{channelId}/products
-	//       ?skus={sku}&fields=skus
-	//
-	// Steps:
-	//   1. Build the request URL using `channelId` and `sku`.
-	//   2. Call fetch() — no Authorization header is needed for guest-accessible
-	//      channels; add one if the channel requires authentication.
-	//   3. Parse the JSON response and locate the SKU entry.
-	//   4. Extract and return the stock quantity from the response.
-	//      Hint: look for a field like `stockQuantity` or `availability`
-	//      within the `skus` array of the matching product.
-	//
-	// Skeleton (adapt the response shape to what the API returns):
-	//
-	//   const url = `/o/headless-commerce-delivery-catalog/v1.0/channels/${channelId}/products?skus=${encodeURIComponent(sku)}&fields=skus`;
-	//   const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-	//   if (!response.ok) {
-	//       throw new Error(`Inventory request failed: ${response.status}`);
-	//   }
-	//   const data = await response.json();
-	//   const product = data.items?.[0];
-	//   const skuEntry = product?.skus?.find(s => s.sku === sku);
-	//   return skuEntry?.stockQuantity ?? 0;
-
-	throw new Error(
-		'fetchProductInventory() is not yet implemented. ' +
-		'Follow the TODO instructions in clarity-b2b-utils/assets/b2b-utils.js.'
-	);
+	const url = `/o/headless-commerce-delivery-catalog/v1.0/channels/${channelId}/products` +
+		`?search=${encodeURIComponent(sku)}&pageSize=1&nestedFields=skus`;
+	const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+	if (!response.ok) {
+		throw new Error(`Inventory request failed: ${response.status}`);
+	}
+	const data = await response.json();
+	const product = data.items?.[0];
+	const skuEntry = product?.skus?.find(s => s.sku === sku);
+	return skuEntry?.availability?.stockQuantity ?? 0;
 }
 
 /**

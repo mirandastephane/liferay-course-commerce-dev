@@ -56,69 +56,67 @@ public class ProductService {
 	 */
 	public ProductSummary getProductBySku(String sku) {
 
-		// TODO: Complete this method.
-		//
 		// Step 1 — Resolve the SKU to a productId and price.
-		//
-		//   Call: GET {liferayUrl}/o/headless-commerce-admin-catalog/v1.0/skus
-		//             ?search={sku}&pageSize=1
-		//
-		//   From the first item in the "items" array, extract:
-		//     - "productId" (long)  → needed for Step 2
-		//     - "price"    (double) → included in the response
-		//
-		//   Example using RestClient:
-		//
-		//   Map skuResponse = restClient.get()
-		//       .uri(liferayUrl + "/o/headless-commerce-admin-catalog/v1.0/skus"
-		//           + "?search=" + sku + "&pageSize=1")
-		//       .header(HttpHeaders.AUTHORIZATION, basicAuth())
-		//       .retrieve()
-		//       .body(Map.class);
-		//
-		//   List<Map> items = (List<Map>) skuResponse.get("items");
-		//   if (items == null || items.isEmpty()) return null;
-		//   Map skuItem = items.get(0);
-		//   long productId = ((Number) skuItem.get("productId")).longValue();
-		//   double price   = ((Number) skuItem.get("price")).doubleValue();
+		Map skuResponse = restClient.get()
+			.uri(liferayUrl + "/o/headless-commerce-admin-catalog/v1.0/skus"
+				+ "?search=" + sku + "&pageSize=1")
+			.header(HttpHeaders.AUTHORIZATION, basicAuth())
+			.retrieve()
+			.body(Map.class);
+
+		List<Map> items = (List<Map>) skuResponse.get("items");
+		if (items == null || items.isEmpty()) return null;
+		Map skuItem = items.get(0);
+		long productId = ((Number) skuItem.get("productId")).longValue();
+		double price   = ((Number) skuItem.get("price")).doubleValue();
 
 		// Step 2 — Resolve the product name and Wholesale Only custom field.
-		//
-		//   Call: GET {liferayUrl}/o/headless-commerce-admin-catalog/v1.0/products/{productId}
-		//
-		//   From the response, extract:
-		//     - "name"         (Map<String, String>) — use the "en_US" key
-		//     - "customFields" (List<Map>)           — find the map whose
-		//       "name" equals "Wholesale Only" and read "customValue.data" (boolean)
-		//
-		//   Example:
-		//
-		//   Map productResponse = restClient.get()
-		//       .uri(liferayUrl + "/o/headless-commerce-admin-catalog/v1.0/products/" + productId)
-		//       .header(HttpHeaders.AUTHORIZATION, basicAuth())
-		//       .retrieve()
-		//       .body(Map.class);
-		//
-		//   String name = ((Map<String, String>) productResponse.get("name")).get("en_US");
-		//
-		//   List<Map> customFields = (List<Map>) productResponse.get("customFields");
-		//   boolean wholesaleOnly = customFields.stream()
-		//       .filter(f -> "Wholesale Only".equals(f.get("name")))
-		//       .map(f -> (Map) f.get("customValue"))
-		//       .map(cv -> (Boolean) cv.get("data"))
-		//       .findFirst()
-		//       .orElse(false);
+		Map productResponse = restClient.get()
+			.uri(liferayUrl + "/o/headless-commerce-admin-catalog/v1.0/products/" + productId)
+			.header(HttpHeaders.AUTHORIZATION, basicAuth())
+			.retrieve()
+			.body(Map.class);
 
-		// Step 3 — Return the aggregated summary.
-		//
-		//   return new ProductSummary(sku, name, price, 0, wholesaleOnly);
-		//
-		//   Note: stockQuantity is left as 0 in this exercise.
-		//   Bonus: fetch it from the Inventory API:
-		//     GET /o/headless-commerce-admin-inventory/v1.0/skus/{sku}/warehouseItems
-		//     and sum the "quantity" field across all warehouses.
+		String name = ((Map<String, String>) productResponse.get("name")).get("en_US");
 
-		return new ProductSummary(sku, "TODO: not yet implemented", 0.0, 0, false);
+		List<Map> customFields = (List<Map>) productResponse.get("customFields");
+		boolean wholesaleOnly = customFields.stream()
+			.filter(f -> "Wholesale Only".equals(f.get("name")))
+			.map(f -> (Map) f.get("customValue"))
+			.map(cv -> (Boolean) cv.get("data"))
+			.findFirst()
+			.orElse(false);
+
+		// Step 3 — Fetch total stock quantity across all warehouses.
+		Map warehousesResponse = restClient.get()
+			.uri(liferayUrl + "/o/headless-commerce-admin-inventory/v1.0/warehouses?pageSize=50")
+			.header(HttpHeaders.AUTHORIZATION, basicAuth())
+			.retrieve()
+			.body(Map.class);
+
+		int stockQuantity = 0;
+		List<Map> warehouses = (List<Map>) warehousesResponse.get("items");
+		if (warehouses != null) {
+			for (Map warehouse : warehouses) {
+				long warehouseId = ((Number) warehouse.get("id")).longValue();
+				Map itemsResponse = restClient.get()
+					.uri(liferayUrl + "/o/headless-commerce-admin-inventory/v1.0/warehouses/"
+						+ warehouseId + "/warehouseItems?pageSize=200")
+					.header(HttpHeaders.AUTHORIZATION, basicAuth())
+					.retrieve()
+					.body(Map.class);
+				List<Map> warehouseItems = (List<Map>) itemsResponse.get("items");
+				if (warehouseItems != null) {
+					for (Map warehouseItem : warehouseItems) {
+						if (sku.equals(warehouseItem.get("sku"))) {
+							stockQuantity += ((Number) warehouseItem.get("quantity")).intValue();
+						}
+					}
+				}
+			}
+		}
+
+		return new ProductSummary(sku, name, price, stockQuantity, wholesaleOnly);
 	}
 
 	// ---------------------------------------------------------------------------
