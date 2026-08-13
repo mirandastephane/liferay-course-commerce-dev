@@ -31,7 +31,7 @@ public class ProductController {
 	 *
 	 * <p>Example request:
 	 * <pre>
-	 *   GET http://localhost:58081/products/CVS-STD-SV-2003
+	 *   GET http://localhost:58080/products/CVS-STD-SV-2003
 	 * </pre>
 	 *
 	 * <p>Example response (after completing the TODOs in {@link ProductService}):

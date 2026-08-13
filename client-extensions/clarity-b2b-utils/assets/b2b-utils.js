@@ -22,41 +22,25 @@
  * }
  */
 export async function fetchProductInventory(sku, channelId) {
-
-	// TODO: Implement the API call to retrieve the stock quantity for the
-	// given SKU within the specified channel.
-	//
-	// Suggested endpoint (Headless Commerce Delivery Catalog):
-	//
-	//   GET /o/headless-commerce-delivery-catalog/v1.0/channels/{channelId}/products
-	//       ?search={sku}&pageSize=1&nestedFields=skus
-	//
-	// Steps:
-	//   1. Build the request URL using `channelId` and `sku`.
-	//   2. Call fetch() — no Authorization header is needed; the browser session
-	//      cookie is used automatically when the user is logged in.
-	//   3. Parse the JSON response and locate the SKU entry within the first
-	//      product's `skus` array.
-	//   4. Extract and return the stock quantity from the response.
-	//      Hint: `stockQuantity` is nested inside the `availability` object
-	//      of each SKU entry.
-	//
-	// Skeleton (adapt the response shape to what the API returns):
-	//
-	//   const url = `/o/headless-commerce-delivery-catalog/v1.0/channels/${channelId}/products?search=${encodeURIComponent(sku)}&pageSize=1&nestedFields=skus`;
-	//   const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-	//   if (!response.ok) {
-	//       throw new Error(`Inventory request failed: ${response.status}`);
-	//   }
-	//   const data = await response.json();
-	//   const product = data.items?.[0];
-	//   const skuEntry = product?.skus?.find(s => s.sku === sku);
-	//   return skuEntry?.availability?.stockQuantity ?? 0;
-
-	throw new Error(
-		'fetchProductInventory() is not yet implemented. ' +
-		'Follow the TODO instructions in clarity-b2b-utils/assets/b2b-utils.js.'
-	);
+	const url = `/o/headless-commerce-delivery-catalog/v1.0/channels/${channelId}/products?search=${encodeURIComponent(sku)}&pageSize=1&nestedFields=skus`;
+	const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+	if (!response.ok) {
+		throw new Error(`Inventory request failed: ${response.status}`);
+	}
+	const data = await response.json();
+	const product = data.items?.[0];
+	if (!product) {
+		throw new Error(`SKU not found in channel ${channelId}: ${sku}`);
+	}
+	const skuEntry = product.skus?.find(s => s.sku === sku);
+	if (!skuEntry) {
+		throw new Error(`SKU not matched in product variant list: ${sku}`);
+	}
+	const stockQuantity = skuEntry.availability?.stockQuantity;
+	if (stockQuantity === null || stockQuantity === undefined) {
+		throw new Error(`No availability data for SKU ${sku} — enable "Display Availability" on the product`);
+	}
+	return stockQuantity;
 }
 
 /**
