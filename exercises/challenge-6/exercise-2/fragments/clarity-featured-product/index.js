@@ -11,7 +11,7 @@
 // threshold triggers the Low Stock badge.
 
 /** SKU of the product to feature in this card. */
-const SKU = 'CVS-STD-LNS-0110';
+const SKU = 'CLARITY-EXT-CARE-2YR';
 
 /** Commerce Channel ID for the Distributor Portal. */
 const CHANNEL_ID = 97521;
