@@ -1,6 +1,6 @@
-package com.clarity.commerce.product.endpoint.service;
+package com.clarityvisionsolutions.commerce.product.endpoint.service;
 
-import com.clarity.commerce.product.endpoint.model.ProductSummary;
+import com.clarityvisionsolutions.commerce.product.endpoint.model.ProductSummary;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

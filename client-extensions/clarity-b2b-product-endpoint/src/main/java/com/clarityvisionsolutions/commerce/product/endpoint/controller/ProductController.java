@@ -1,7 +1,7 @@
-package com.clarity.commerce.product.endpoint.controller;
+package com.clarityvisionsolutions.commerce.product.endpoint.controller;
 
-import com.clarity.commerce.product.endpoint.model.ProductSummary;
-import com.clarity.commerce.product.endpoint.service.ProductService;
+import com.clarityvisionsolutions.commerce.product.endpoint.model.ProductSummary;
+import com.clarityvisionsolutions.commerce.product.endpoint.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
