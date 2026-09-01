@@ -29,29 +29,32 @@ export async function fetchProductInventory(sku, channelId) {
 	// Suggested endpoint (Headless Commerce Delivery Catalog):
 	//
 	//   GET /o/headless-commerce-delivery-catalog/v1.0/channels/{channelId}/products
-	//       ?search={sku}&pageSize=1&nestedFields=skus
+	//       ?search={sku}&pageSize=5&nestedFields=skus
 	//
 	// Steps:
 	//   1. Build the request URL using `channelId` and `sku`.
 	//   2. Call fetch() — no Authorization header is needed; the browser session
 	//      cookie is used automatically when the user is logged in.
-	//   3. Parse the JSON response and locate the SKU entry within the first
-	//      product's `skus` array.
+	//   3. Iterate the returned products to find the one containing an exact SKU
+	//      match — use pageSize=5 because the search API ranks by relevance and
+	//      the target product may not be the first result.
 	//   4. Extract and return the stock quantity from the response.
 	//      Hint: `stockQuantity` is nested inside the `availability` object
 	//      of each SKU entry.
 	//
 	// Skeleton (adapt the response shape to what the API returns):
 	//
-	//   const url = `/o/headless-commerce-delivery-catalog/v1.0/channels/${channelId}/products?search=${encodeURIComponent(sku)}&pageSize=1&nestedFields=skus`;
+	//   const url = `/o/headless-commerce-delivery-catalog/v1.0/channels/${channelId}/products?search=${encodeURIComponent(sku)}&pageSize=5&nestedFields=skus`;
 	//   const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
 	//   if (!response.ok) {
 	//       throw new Error(`Inventory request failed: ${response.status}`);
 	//   }
 	//   const data = await response.json();
-	//   const product = data.items?.[0];
-	//   const skuEntry = product?.skus?.find(s => s.sku === sku);
-	//   return skuEntry?.availability?.stockQuantity ?? 0;
+	//   for (const product of data.items ?? []) {
+	//       const skuEntry = product.skus?.find(s => s.sku === sku);
+	//       if (skuEntry) return skuEntry.availability?.stockQuantity ?? 0;
+	//   }
+	//   return 0;
 
 	throw new Error(
 		'fetchProductInventory() is not yet implemented. ' +
